@@ -23,6 +23,6 @@ app.use('/api/file',routerFile);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(options)));
 
-app.listen(3001, () => {
+app.listen(3000, () => {
     console.log("Todo bien, todo correcto y yo que me alegroo. 😎");
   });
