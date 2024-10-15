@@ -8,10 +8,12 @@ const routerUser = require('./app/routes/user.routes.js');
 const homeRoute = require('./app/routes/home.routes.js');
 const routerDirectory = require('./app/routes/directory.routes.js');
 const routerFile = require('./app/routes/file.routes.js');
+const cors = require('cors');
+
 
 let app = express();
 
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
