@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { directoryCreateProvider,getDirectorysByUserID } = require('../providers/directory.providers.js');
+const { directoryCreateProvider,getDirectorysByUserID,deleteDirectorysById } = require('../providers/directory.providers.js');
 
 const directoryCreateController = async (req, res) => {
 
@@ -79,4 +79,34 @@ const getDirectoryController = async (req, res) => {
 
 }
 
-module.exports = { directoryCreateController,getDirectoryController };
+const deleteDirectoryController = async (req, res) => {
+
+    try {
+        const directoryID = req.params.id;
+        const userID = req.userID;
+
+        const validate = Joi.object({
+        });
+        
+        const { error } = validate.validate(req.body);
+
+        if (error) return res.status(400).json({
+            "success": false,
+            "message": 'error entering data',
+            "data": error.details.map(a => a?.message)
+        });
+
+        res.json(await deleteDirectorysById(directoryID));
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            "success": false,
+            "message": 'error',
+            "data": null
+        });
+    }
+
+}
+
+module.exports = { directoryCreateController, getDirectoryController, deleteDirectoryController };

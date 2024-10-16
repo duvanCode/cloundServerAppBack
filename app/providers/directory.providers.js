@@ -1,4 +1,4 @@
-const { insertDocument, getDocuments } = require('../models/model.js');
+const { insertDocument, getDocuments,deleteDocument } = require('../models/model.js');
 
 const directoryCreateProvider = async (directoryObject) => {
 
@@ -31,6 +31,7 @@ const directoryCreateProvider = async (directoryObject) => {
 }
 
 const getDirectorysByUserID = async (userID,fatherID) => {
+
     try {
         let directoryObject = {
             userID,
@@ -61,4 +62,34 @@ const getDirectorysByUserID = async (userID,fatherID) => {
     }
 };
 
-module.exports = { directoryCreateProvider, getDirectorysByUserID };
+
+const deleteDirectorysById = async (directoryID) => {
+    
+    try {
+
+        let result = await deleteDocument(directoryID, process.env.MONGO_COLLECTION_DIRECTORY);
+
+        if (result) return {
+            "success": true,
+            "message": 'ok',
+            "data": result
+        };
+
+        return {
+            "success": true,
+            "message": 'ok',
+            "data": []
+        };
+
+    } catch (e) {
+
+        return {
+            "success": false,
+            "message": 'error c al eliminar el directory',
+            "data": null
+        };
+    }
+};
+
+
+module.exports = { directoryCreateProvider, getDirectorysByUserID, deleteDirectorysById };
