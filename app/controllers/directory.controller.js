@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { directoryCreateProvider,getDirectorysByUserID,deleteDirectorysById } = require('../providers/directory.providers.js');
+const { directoryCreateProvider,getDirectorysByUserID,deleteDirectorysById, createFileDataProvider } = require('../providers/directory.providers.js');
 
 const directoryCreateController = async (req, res) => {
 
@@ -8,13 +8,27 @@ const directoryCreateController = async (req, res) => {
         const fatherID = req.body?.fatherID ?? null;
         const name = req.body?.name ?? null;
         const type = req.body?.type ?? null;
+        const fileID = req.body?.fileID ?? null;
+        const fileUrl = req.body?.fileUrl ?? null;
         const userID = req.userID;
+        let validate;
 
-        const validate = Joi.object({
-            fatherID: Joi.string().min(1).required(),
-            name: Joi.string().min(5).required(),
-            type: Joi.string().min(2).required()
-        });
+        if(type == 'file')
+        {
+             validate = Joi.object({
+                fatherID: Joi.string().min(1).required(),
+                name: Joi.string().min(5).required(),
+                type: Joi.string().min(2).required(),
+                fileID: Joi.string().min(2).required(),
+                fileUrl: Joi.string().min(2).required()
+            });
+        } else {
+             validate = Joi.object({
+                fatherID: Joi.string().min(1).required(),
+                name: Joi.string().min(5).required(),
+                type: Joi.string().min(2).required()
+            });
+        }
         
         const { error } = validate.validate(req.body);
 
@@ -24,7 +38,15 @@ const directoryCreateController = async (req, res) => {
             "data": error.details.map(a => a?.message)
         });
 
-        let dataID = null;
+        let dataFile = null;
+        if(type == 'file') {
+            dataFile = {
+                fileID:fileID,
+                fileUrl:fileUrl,
+                tumblerId:null,
+                tumblerUrl:null
+            };
+        };
         let tags = null;
 
         let directoryObject = {
@@ -32,7 +54,7 @@ const directoryCreateController = async (req, res) => {
             name,
             tags,
             type,
-            dataID,
+            dataFile,
             userID
         };
 
