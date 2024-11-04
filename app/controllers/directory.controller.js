@@ -10,6 +10,8 @@ const directoryCreateController = async (req, res) => {
         const type = req.body?.type ?? null;
         const fileID = req.body?.fileID ?? null;
         const fileUrl = req.body?.fileUrl ?? null;
+        const originalSize = req.body?.originalSize ?? null;
+        const mimeType = req.body?.mimeType ?? null;
         const userID = req.userID;
         let validate;
 
@@ -20,7 +22,9 @@ const directoryCreateController = async (req, res) => {
                 name: Joi.string().min(5).required(),
                 type: Joi.string().min(2).required(),
                 fileID: Joi.string().min(2).required(),
-                fileUrl: Joi.string().min(2).required()
+                fileUrl: Joi.string().min(2).required(),
+                originalSize: Joi.string().min(2).required(),
+                mimeType: Joi.string().min(2).required()
             });
         } else {
              validate = Joi.object({
@@ -43,6 +47,8 @@ const directoryCreateController = async (req, res) => {
             dataFile = {
                 fileID:fileID,
                 fileUrl:fileUrl,
+                originalSize:originalSize,
+                mimeType:mimeType,
                 tumblerId:null,
                 tumblerUrl:null
             };
