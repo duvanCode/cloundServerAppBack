@@ -23,7 +23,7 @@ const directoryCreateController = async (req, res) => {
                 type: Joi.string().min(2).required(),
                 fileID: Joi.string().min(2).required(),
                 fileUrl: Joi.string().min(2).required(),
-                originalSize: Joi.string().min(2).required(),
+                originalSize: Joi.number().min(2).required(),
                 mimeType: Joi.string().min(2).required()
             });
         } else {
