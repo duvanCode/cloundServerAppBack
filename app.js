@@ -25,6 +25,6 @@ app.use('/api/file',routerFile);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(options)));
 
-app.listen(3000, () => {
-    console.log("Todo bien, todo correcto y yo que me alegroo. 😎");
+app.listen(process.env.PORT, () => {
+    console.log("Todo bien, todo correcto y yo que me alegroo. 😎, en el puerto:" + process.env.PORT);
   });
