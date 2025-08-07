@@ -43,7 +43,7 @@ const getTokenFile = async () => {
         return {
             "success": false,
             "message": 'error al generar token',
-            "data": process.env.DEBUG ? e : NULL
+            "data": process.env.DEBUG == "true" ? e : NULL
         };
 
     }
