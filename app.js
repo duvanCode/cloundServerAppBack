@@ -14,7 +14,7 @@ const contentSecurityPolicy = require('./app/middlewares/contentSecurityPolicy.m
 
 let app = express();
 
-app.use(contentSecurityPolicy());
+app.use(contentSecurityPolicy);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
