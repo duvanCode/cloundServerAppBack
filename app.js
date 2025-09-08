@@ -1,4 +1,5 @@
 require('dotenv').config();
+const http = require("http");
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -10,23 +11,38 @@ const routerDirectory = require('./app/routes/directory.routes.js');
 const routerFile = require('./app/routes/file.routes.js');
 const cors = require('cors');
 const contentSecurityPolicy = require('./app/middlewares/contentSecurityPolicy.middleware.js');
-
+const { Server } = require("socket.io");
+const registerSockets = require("./app/sockets/index.js");
 
 let app = express();
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*", 
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
+        credentials: true
+    },
+    allowEIO3: true, 
+    transports: ['websocket', 'polling']
+});
+
+
 
 app.use(contentSecurityPolicy);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+registerSockets(io);
 app.get('/',homeRoute);
 app.use('/api',routerLogin);
 app.use('/api/user',routerUser);
 app.use('/api/directory',routerDirectory);
 app.use('/api/file',routerFile);
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(options)));
 
-app.listen(process.env.PORT, () => {
+server.listen(process.env.PORT, () => {
     console.log("Todo bien, todo correcto y yo que me alegroo. 😎, en el puerto:" + process.env.PORT);
-  });
+});

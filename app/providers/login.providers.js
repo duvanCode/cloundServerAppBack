@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { insertDocument, getDocuments } = require('../models/model.js');
+const { insertDocument, getDocuments, getDocumentById } = require('../models/model.js');
 const bcrypt = require('bcrypt');
 
 async function verificarpass(contrasenaIngresada, contrasenaHash) {
@@ -11,12 +11,12 @@ async function verificarpass(contrasenaIngresada, contrasenaHash) {
             "message": 'ok',
             "data": esValida
         };
-    } catch (error) {
-        console.error('Error al verificar la contraseña:', error);
+    } catch (e) {
+
         return {
             "success": false,
             "message": 'Error al verificar clave hash',
-            "data": null
+            "data": process.env.DEBUG == "true" ? e : NULL
         }
     }
 }
@@ -30,12 +30,12 @@ async function getHash(pass) {
             "message": 'ok',
             "data": passHash
         };
-    } catch (error) {
-        console.error('Error al generar el hash:', error);
+    } catch (e) {
+
         return {
             "success": false,
             "message": 'Error al generar hash',
-            "data": null
+            "data": process.env.DEBUG == "true" ? e : NULL
         }
     }
 }
@@ -56,111 +56,179 @@ const formatearFecha = (fecha) => {
 
 const getDate = () => {
     const fechaActual = new Date();
+
     const fechaDosDiasMas = new Date(fechaActual);
     fechaDosDiasMas.setDate(fechaDosDiasMas.getDate() + 2);
+
+    const fechaUnMinMas = new Date(fechaActual);
+    fechaUnMinMas.setMinutes(fechaUnMinMas.getMinutes() + 1);
+
     return {
-        now:formatearFecha(fechaActual),
-        tomorrow:formatearFecha(fechaDosDiasMas)
+        now: formatearFecha(fechaActual),
+        tomorrow: formatearFecha(fechaDosDiasMas),
+        oneMinutesLater: formatearFecha(fechaUnMinMas)
     };
-}
+};
+
 
 const generateUUID = () => {
 
     let dt = new Date().getTime();
-    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = (dt + Math.random() * 16) % 16 | 0;
-      dt = Math.floor(dt / 16);
-      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (dt + Math.random() * 16) % 16 | 0;
+        dt = Math.floor(dt / 16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
     return uuid;
 }
 
-const loginProvider = async (username,password) => {
 
-    let userGet = await getDocuments({ username: username }, process.env.MONGO_COLLECTION_USER);
+const loginProvider = async (username, password) => {
 
-    if (!(userGet.length > 0)) return {
-        "success": false,
-        "message": 'inexisting user',
-        "data": null
-    }
 
-    let estadoPass = await verificarpass(password,userGet[0].password);
+    try {
 
-    if(!(estadoPass.success)) return estadoPass;
+        let userGet = await getDocuments({ username: username }, process.env.MONGO_COLLECTION_USER);
 
-    if(!(estadoPass.data)) return {
-        "success": false,
-        "message": 'Unauthorized',
-        "data": null
-    }
+        if (!(userGet?.length > 0)) return {
+            "success": false,
+            "message": 'inexisting user',
+            "data": null
+        }
 
-    let tokenUser = await generateUserToken(userGet[0]._id);
+        let estadoPass = await verificarpass(password, userGet[0].password);
 
-    if(!(tokenUser.success)) return tokenUser;
+        if (!(estadoPass.success)) return estadoPass;
 
-    return {
-        "success": true,
-        "message": 'user logged successfully',
-        "data": tokenUser.data
-    }
+        if (!(estadoPass.data)) return {
+            "success": false,
+            "message": 'Unauthorized',
+            "data": null
+        }
 
-}
+        let tokenUser = await generateUserToken(userGet[0]._id);
 
-async function registerProvider(username,password,name,phone) {
+        if (!(tokenUser.success)) return tokenUser;
 
-    let userGet = await getDocuments({ username: username }, process.env.MONGO_COLLECTION_USER);
+        return {
+            "success": true,
+            "message": 'user logged successfully',
+            "data": tokenUser.data
+        }
 
-    if (userGet.length > 0) {
+    } catch (e) {
+
         return {
             "success": false,
-            "message": 'existing user',
-            "data": null
+            "message": 'error al generar token',
+            "data": process.env.DEBUG == "true" ? e : NULL
         };
 
     }
 
-    let passwordHash = await getHash(password);
+}
 
-    if(!(passwordHash.success)) return passwordHash;
+const loginQrProvider = async (UserID) => {
 
-    const user = {
-        "username": username,
-        "password":passwordHash.data,
-        "name": name,
-        "phone":phone,
+
+    try {
+
+        let userGet = await getDocumentById(UserID, process.env.MONGO_COLLECTION_USER);
+
+        if (!(userGet)) return {
+            "success": false,
+            "message": 'inexisting user',
+            "data": null
+        }
+
+        let tokenUser = await generateUserToken(userGet._id);
+
+        if (!(tokenUser.success)) return tokenUser;
+
+        return {
+            "success": true,
+            "message": 'user logged successfully',
+            "data": tokenUser.data
+        }
+
+    } catch (e) {
+
+        return {
+            "success": false,
+            "message": 'error al generar token',
+            "data": process.env.DEBUG == "true" ? e : NULL
+        };
+
     }
 
-    let id = await insertDocument(user, process.env.MONGO_COLLECTION_USER);
+}
 
-    if (!id) return {
-        "success": false,
-        "message": 'error creating user',
-        "data": null
-    }
-    
-    let tokenUser = await generateUserToken(id);
+async function registerProvider(username, password, name, phone) {
 
-    if(!(tokenUser.success)) return tokenUser;
+    try {
 
-    return {
-        "success": true,
-        "message": 'user created successfully',
-        "data": tokenUser.data
+        let userGet = await getDocuments({ username: username }, process.env.MONGO_COLLECTION_USER);
+
+        if (userGet.length > 0) {
+            return {
+                "success": false,
+                "message": 'existing user',
+                "data": null
+            };
+
+        }
+
+        let passwordHash = await getHash(password);
+
+        if (!(passwordHash.success)) return passwordHash;
+
+        const user = {
+            "username": username,
+            "password": passwordHash.data,
+            "name": name,
+            "phone": phone,
+        }
+
+        let id = await insertDocument(user, process.env.MONGO_COLLECTION_USER);
+
+        if (!id) return {
+            "success": false,
+            "message": 'error creating user',
+            "data": null
+        }
+
+        let tokenUser = await generateUserToken(id);
+
+        if (!(tokenUser.success)) return tokenUser;
+
+        return {
+            "success": true,
+            "message": 'user created successfully',
+            "data": tokenUser.data
+        }
+
+    } catch (e) {
+
+        return {
+            "success": false,
+            "message": 'error al generar token',
+            "data": process.env.DEBUG == "true" ? e : NULL
+        };
+
     }
 
 }
 
 const generateUserToken = async (userID) => {
-    
+
     try {
-        
+
         let dates = getDate();
         let createdDate = dates.now;
         let expirationDate = dates.tomorrow;
         let guuID = generateUUID();
 
-        
+
         let userToken = {
             userID,
             createdDate,
@@ -171,7 +239,7 @@ const generateUserToken = async (userID) => {
 
         let tokenID = await insertDocument(userToken, process.env.MONGO_COLLECTION_TOKENS);
 
-        if(!(tokenID)) return {
+        if (!(tokenID)) return {
             "success": false,
             "message": 'error al ingresar el token',
             "data": null
@@ -183,20 +251,106 @@ const generateUserToken = async (userID) => {
             "success": true,
             "message": 'ok',
             "data": {
-                "token":tokenJWT
+                "token": tokenJWT
             }
         }
-        
+
     } catch (e) {
 
         return {
             "success": false,
             "message": 'error al generar token',
-            "data": e
+            "data": process.env.DEBUG == "true" ? e : NULL
         };
-    
+
     }
 
 };
 
-module.exports = { loginProvider, registerProvider };
+const setQrUserProvider = async (socketUserID) => {
+
+    try {
+
+        let dates = getDate();
+        let createdDate = dates.now;
+        let expirationDate = dates.oneMinutesLater;
+        let guuID = generateUUID();
+
+
+        let socketUser = {
+            createdDate,
+            expirationDate,
+            socketUserID,
+            guuID,
+        };
+
+        let tokenID = await insertDocument(socketUser, process.env.MONGO_COLLECTION_QR_CLIENTS);
+
+        if (!(tokenID)) return {
+            "success": false,
+            "message": 'error al ingresar el Qr',
+            "data": null
+        };
+
+        return {
+            "success": true,
+            "message": 'ok',
+            "data": {
+                guuID
+            }
+        }
+
+    } catch (e) {
+
+        return {
+            "success": false,
+            "message": 'error al generar token',
+            "data": process.env.DEBUG == "true" ? e : NULL
+        };
+
+    }
+
+};
+
+const getQrCodeProvider = async (guuID) => {
+
+    try {
+
+        let userQr = await getDocuments({ guuID: guuID }, process.env.MONGO_COLLECTION_QR_CLIENTS);
+
+        if (!(userQr.length > 0)) return {
+            "success": false,
+            "message": 'inexisting Qr',
+            "data": null
+        }
+
+        const currentDate = new Date();
+        const qrExpirationDate = new Date(userQr[0]['expirationDate']);
+
+        if (qrExpirationDate <= currentDate) {
+            return {
+                "success": false,
+                "message": 'QR code has expired',
+                "data": null
+            }
+        }
+
+        return {
+            "success": true,
+            "message": 'user logged successfully',
+            "data": userQr[0]
+        }
+
+    } catch (e) {
+
+        return {
+            "success": false,
+            "message": 'error al obtener Qr',
+            "data": process.env.DEBUG == "true" ? e : NULL
+        };
+
+    }
+
+}
+
+module.exports = { loginProvider, registerProvider, setQrUserProvider, loginQrProvider, getQrCodeProvider };

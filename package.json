@@ -10,8 +10,13 @@
     "mime-types": "^2.1.35",
     "mongodb": "^4.0",
     "nodemon": "^3.1.10",
+    "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "uuid4": "^2.0.3"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   }
 }

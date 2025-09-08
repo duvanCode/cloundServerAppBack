@@ -43,7 +43,6 @@ const registerController = async (req, res) => {
         const name = req.body?.name ?? null;
         const phone = req.body?.phone ?? null;
 
-        console.log(req.body);
         const validate = Joi.object({
             username: Joi.string().min(5).required(),
             password: Joi.string().min(5).required(),
