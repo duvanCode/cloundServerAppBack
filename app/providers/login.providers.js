@@ -113,7 +113,15 @@ const loginProvider = async (username, password) => {
         return {
             "success": true,
             "message": 'user logged successfully',
-            "data": tokenUser.data
+            "data": {
+                token: tokenUser.data.token,
+                user: {
+                    _id: userGet[0]?._id,
+                    username: userGet[0]?.username,
+                    name: userGet[0]?.name,
+                    phone: userGet[0]?.phone,
+                }
+            }
         }
 
     } catch (e) {
